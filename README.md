@@ -18,5 +18,9 @@ On the right column is the voltage in mV.
 ### Memory
 On the left column is the frequency in MHz and on the right column is the voltage in mV.
 
+## To-do
+* Add labels
+* Align controls
+
 ## Credits
 * [caa82437 - PolarisBiosEditor](https://github.com/caa82437/PolarisBiosEditor)
