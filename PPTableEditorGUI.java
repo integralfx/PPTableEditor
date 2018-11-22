@@ -3,6 +3,9 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,11 +39,11 @@ public class PPTableEditorGUI extends JFrame
     {
         super("PP Table Editor");
 
-        main_panel.setLayout(new FlowLayout());
+        main_panel.setLayout(new GridBagLayout());
 
         add_menu_bar();
 
-        setSize(300, 200);
+        setSize(500, 300);
         setResizable(false);
         setVisible(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -103,10 +106,33 @@ public class PPTableEditorGUI extends JFrame
                                     if(panel_power != null)
                                         main_panel.remove(panel_power);
 
-                                    add_core_panel();
-                                    add_voltage_panel();
-                                    add_memory_panel();
-                                    add_power_panel();
+                                    GridBagConstraints gbc = new GridBagConstraints();
+                                    gbc.insets = new Insets(5, 5, 5, 0);
+
+                                    gbc.gridy = 0;
+                                    gbc.gridheight = 2;
+
+                                    // left, spans 2 rows
+                                    gbc.gridx = 0; 
+                                    add_core_panel(gbc);
+
+                                    // middle, spans 2 rows
+                                    gbc.gridx = 1;
+                                    add_voltage_panel(gbc);
+
+                                    gbc.gridx = 2; 
+                                    gbc.gridheight = 1;
+                                    gbc.insets.bottom = 0;
+                                    gbc.insets.right = 5;
+
+                                    // top right
+                                    gbc.gridy = 0;
+                                    add_memory_panel(gbc);
+
+                                    // bottom right
+                                    gbc.gridy = 1; 
+                                    gbc.insets.bottom = 5;
+                                    add_power_panel(gbc);
 
                                     revalidate();
                                     repaint();
@@ -146,22 +172,34 @@ public class PPTableEditorGUI extends JFrame
         setJMenuBar(menu_bar);
     }
 
-    private void add_core_panel()
+    private void add_core_panel(GridBagConstraints con)
     {
-        panel_core = new JPanel();
-        BoxLayout layout = new BoxLayout(panel_core, BoxLayout.Y_AXIS);
-        panel_core.setLayout(layout);
+        panel_core = new JPanel(new GridBagLayout());
 
-        for(PPTableEditor.ATOM_SCLK_ENTRY e : ppte.sclk_entries)
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 0, 0);
+        panel_core.add(new JLabel("P-State"), gbc);
+        gbc.gridx++;
+        panel_core.add(new JLabel("Frequency (MHz)"), gbc);
+        gbc.gridx++;
+        panel_core.add(new JLabel("VID"), gbc);
+
+        for(int i = 0; i < ppte.sclk_entries.length; i++)
         {
-            JPanel row = new JPanel();
+            PPTableEditor.ATOM_SCLK_ENTRY e = ppte.sclk_entries[i];
+            gbc.gridx = 0; gbc.gridy = i + 1;
+
+            panel_core.add(new JLabel("P" + i), gbc);
 
             JTextField txt_clock = new JTextField(5);
             txt_clock.setText(String.valueOf(e.ulSclk / 100));
-            row.add(txt_clock);
+            gbc.gridx++;
+            panel_core.add(txt_clock, gbc);
             JTextField txt_index = new JTextField(2);
             txt_index.setText(String.valueOf(e.ucVddInd));
-            row.add(txt_index);
+            gbc.gridx++;
+            panel_core.add(txt_index, gbc);
 
             DocumentListener listener = new DocumentListener()
             {
@@ -213,33 +251,36 @@ public class PPTableEditorGUI extends JFrame
 
             txt_clock.getDocument().addDocumentListener(listener);
             txt_index.getDocument().addDocumentListener(listener);
-
-            panel_core.add(row);
         }
 
         panel_core.setBorder(BorderFactory.createTitledBorder("Core"));
 
-        main_panel.add(panel_core);
+        main_panel.add(panel_core, con);
     }
 
-    private void add_voltage_panel()
+    private void add_voltage_panel(GridBagConstraints con)
     {
-        panel_voltage = new JPanel();
-        BoxLayout layout = new BoxLayout(panel_voltage, BoxLayout.Y_AXIS);
-        panel_voltage.setLayout(layout);
+        panel_voltage = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 0, 0);
+        panel_voltage.add(new JLabel("ID"), gbc);
+        gbc.gridx++;
+        panel_voltage.add(new JLabel("Value (mV)"), gbc);
 
         for(int i = 0; i < ppte.voltage_entries.length; i++)
         {
             PPTableEditor.ATOM_VOLTAGE_ENTRY entry = ppte.voltage_entries[i];
-            JPanel row = new JPanel();
+            gbc.gridx = 0; gbc.gridy = i + 1;
 
             JTextField txt_index = new JTextField(2);
             txt_index.setText(String.valueOf(i));
             txt_index.setEditable(false);
-            row.add(txt_index);
+            panel_voltage.add(txt_index, gbc);
             JTextField txt_voltage = new JTextField(5);
             txt_voltage.setText(String.valueOf(entry.usVdd));
-            row.add(txt_voltage);
+            gbc.gridx++; 
+            panel_voltage.add(txt_voltage, gbc);
 
             txt_voltage.getDocument().addDocumentListener(new DocumentListener()
             {
@@ -271,31 +312,35 @@ public class PPTableEditorGUI extends JFrame
                     }
                 }
             });
-
-            panel_voltage.add(row);
         }
 
         panel_voltage.setBorder(BorderFactory.createTitledBorder("Voltage"));
 
-        main_panel.add(panel_voltage);
+        main_panel.add(panel_voltage, con);
     }
 
-    private void add_memory_panel()
+    private void add_memory_panel(GridBagConstraints con)
     {
-        panel_memory = new JPanel();
-        BoxLayout layout = new BoxLayout(panel_memory, BoxLayout.Y_AXIS);
-        panel_memory.setLayout(layout);
+        panel_memory = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0; gbc.gridy = 0;
+        gbc.insets = new Insets(5, 5, 0, 0);
+        panel_memory.add(new JLabel("Frequency (MHz)"), gbc);
+        gbc.gridx++;
+        panel_memory.add(new JLabel("Voltage (mV)"), gbc);
 
-        for(PPTableEditor.ATOM_MCLK_ENTRY e : ppte.mclk_entries)
+        for(int i = 0; i < ppte.mclk_entries.length; i++)
         {
-            JPanel row = new JPanel();
+            PPTableEditor.ATOM_MCLK_ENTRY e = ppte.mclk_entries[i];
+            gbc.gridx = 0; gbc.gridy = i + 1;
 
             JTextField txt_clock = new JTextField(5);
             txt_clock.setText(String.valueOf(e.ulMclk / 100));
-            row.add(txt_clock);
+            panel_memory.add(txt_clock, gbc);
             JTextField txt_voltage = new JTextField(5);
             txt_voltage.setText(String.valueOf(e.usMvdd));
-            row.add(txt_voltage);
+            gbc.gridx++;
+            panel_memory.add(txt_voltage, gbc);
 
             DocumentListener listener = new DocumentListener()
             {
@@ -347,27 +392,25 @@ public class PPTableEditorGUI extends JFrame
 
             txt_clock.getDocument().addDocumentListener(listener);
             txt_voltage.getDocument().addDocumentListener(listener);
-
-            panel_memory.add(row);
         }
 
         panel_memory.setBorder(BorderFactory.createTitledBorder("Memory"));
 
-        main_panel.add(panel_memory);
+        main_panel.add(panel_memory, con);
     }
 
-    private void add_power_panel()
+    private void add_power_panel(GridBagConstraints con)
     {
-        panel_power = new JPanel();
-        BoxLayout layout = new BoxLayout(panel_power, BoxLayout.Y_AXIS);
-        panel_power.setLayout(layout);
+        panel_power = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 0, 0);
 
-        JPanel panel_pplay = new JPanel();
-        panel_pplay.add(new JLabel("Power limit (%):"));
+        gbc.gridx = 0; gbc.gridy = 0;
+        panel_power.add(new JLabel("Power limit (%):"), gbc);
         JTextField txt_power_limit = new JTextField(3);
         txt_power_limit.setText(String.valueOf(ppte.pplay.usPowerControlLimit));
-        panel_pplay.add(txt_power_limit);
-        panel_power.add(panel_pplay);
+        gbc.gridx = (gbc.gridx + 1) % 2;
+        panel_power.add(txt_power_limit, gbc);
 
         txt_power_limit.getDocument().addDocumentListener(new DocumentListener()
         {
@@ -400,26 +443,26 @@ public class PPTableEditorGUI extends JFrame
             }
         });
 
-        JPanel p = new JPanel();
-        p.add(new JLabel("TDP (W):"));
+        gbc.gridx = (gbc.gridx + 1) % 2; gbc.gridy++;
+        panel_power.add(new JLabel("TDP (W):"), gbc);
         JTextField txt_tdp = new JTextField(3);
         txt_tdp.setText(String.valueOf(ppte.ptune.usTDP));
-        p.add(txt_tdp);
-        panel_power.add(p);
+        gbc.gridx = (gbc.gridx + 1) % 2;
+        panel_power.add(txt_tdp, gbc);
 
-        p = new JPanel();
-        p.add(new JLabel("TDC (A):"));
+        gbc.gridx = (gbc.gridx + 1) % 2; gbc.gridy++;
+        panel_power.add(new JLabel("TDC (A):"), gbc);
         JTextField txt_tdc = new JTextField(3);
         txt_tdc.setText(String.valueOf(ppte.ptune.usTDC));
-        p.add(txt_tdc);
-        panel_power.add(p);
+        gbc.gridx = (gbc.gridx + 1) % 2;
+        panel_power.add(txt_tdc, gbc);
 
-        p = new JPanel();
-        p.add(new JLabel("Max power limit (W):"));
+        gbc.gridx = (gbc.gridx + 1) % 2; gbc.gridy++;
+        panel_power.add(new JLabel("Max power limit (W):"), gbc);
         JTextField txt_max_plimit = new JTextField(3);
         txt_max_plimit.setText(String.valueOf(ppte.ptune.usMaximumPowerDeliveryLimit));
-        p.add(txt_max_plimit);
-        panel_power.add(p);
+        gbc.gridx = (gbc.gridx + 1) % 2;
+        panel_power.add(txt_max_plimit, gbc);
 
         DocumentListener listener = new DocumentListener()
         {
@@ -488,7 +531,7 @@ public class PPTableEditorGUI extends JFrame
 
         panel_power.setBorder(BorderFactory.createTitledBorder("Power Limits"));
 
-        main_panel.add(panel_power);
+        main_panel.add(panel_power, con);
     }
 
     private void show_error_dialog(String msg)
